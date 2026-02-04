@@ -3,7 +3,7 @@
 
 **Course:** COMP 9130 - Applied Artificial Intelligence  
 **Authors:** Binger Yu  
-**Date:** January 30, 2026
+**Date:** February 4, 2026
 
 ---
 
@@ -83,19 +83,46 @@ The goal is to identify meaningful customer segments, visualize complex behavior
 
 1. **Clone or Download the Repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/bing-er/mini-project-3.git
    cd mini-project-3
    ```
 
 2. **Create Virtual Environment (Recommended)**
    ```bash
-   python3 -m venv .venv
+   python -m venv .venv
    source .venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
 3. **Install Dependencies**
+   
+   **Option A: Use Setup Script (Recommended)**
    ```bash
+   # On Mac/Linux:
+   chmod +x setup.sh
+   ./setup.sh
+   
+   # On Windows:
+   setup.bat
+   ```
+   
+   **Option B: Manual Installation**
+   ```bash
+   # Upgrade pip first
+   python -m pip install --upgrade pip setuptools wheel
+   
+   # Install requirements
    pip install -r requirements.txt
+   ```
+
+4. **Troubleshooting**
+   
+   If you encounter installation issues (especially with UMAP), see the detailed [TROUBLESHOOTING.md](TROUBLESHOOTING.md) guide.
+   
+   **Quick fix for UMAP issues:**
+   ```bash
+   python -m pip install --upgrade pip setuptools wheel
+   pip install numba llvmlite
+   pip install umap-learn --no-cache-dir
    ```
 
 ### Data Setup
@@ -109,7 +136,7 @@ The dataset is already included in the `data/` directory. If you need to downloa
 
 1. **Start Jupyter Notebook**
    ```bash
-   jupyter lab
+   jupyter notebook
    ```
 
 2. **Open the Analysis Notebook**
@@ -126,92 +153,113 @@ The dataset is already included in the `data/` directory. If you need to downloa
 
 ### Optimal K Selection
 
-**Chosen K: 4 clusters**
+**Chosen K: 3 clusters**
 
 **Justification:**
-1. **Elbow Method**: The inertia curve shows a clear elbow at K=3, with diminishing returns beyond this point
-2. **Silhouette Score**: K=3 achieves a silhouette score of 0.2510, indicating reasonably good cluster separation
-3. **Business Interpretability**: 4 segments are actionable for marketing teams (more would be too complex)
-4. **Statistical Balance**: Balances cluster quality with practical utility
+1. **Elbow Method**: The inertia curve shows a clear elbow at K=3, with diminishing returns beyond this point (inertia drops from 127,784 at K=2 to 111,975 at K=3)
+2. **Silhouette Score**: K=3 achieves the highest silhouette score of 0.2510, indicating the best-defined clusters among all K values tested
+3. **Business Interpretability**: 3 segments provide clear, actionable business categories without over-segmentation
+4. **Statistical Quality**: While the silhouette score is moderate (0.25), this is typical for customer behavioral data where segments naturally overlap along a continuum
 
 | K | Inertia | Silhouette Score | Notes |
 |---|---------|------------------|-------|
-| 2 | 125,432 | 0.38 | Too coarse |
-| 3 | 98,765 | 0.42 | Good but misses patterns |
-| **4** | **85,432** | **0.45** | **Optimal choice** |
-| 5 | 78,234 | 0.43 | Overfitting begins |
-| 6 | 72,156 | 0.41 | Too granular |
+| 2 | 127,784.53 | 0.2100 | Too coarse - misses important patterns |
+| **3** | **111,975.04** | **0.2510** | **Optimal - Highest silhouette score** |
+| 4 | 99,061.94 | 0.1977 | Lower silhouette, unnecessary complexity |
+| 5 | 91,490.50 | 0.1931 | Continued decline in quality |
+| 6 | 84,826.59 | 0.2029 | Too granular for business use |
 
 ### Cluster Descriptions
 
-#### Cluster 0: Cash Advance Users (22% of customers)
-- **Characteristics**: High cash advance usage, moderate balance
-- **Avg Balance**: $2,850
-- **Avg Cash Advance**: $3,200
-- **Avg Purchases**: $450
-- **Risk Level**: Medium-High (potential financial distress)
+#### Cluster 0: Premium Shoppers (14.2% of customers)
+- **Characteristics**: High purchases, high credit limits, very frequent transactions
+- **Avg Balance**: $2,182.35
+- **Avg Purchases**: $4,187.02 (4.17× dataset mean - highest of all clusters)
+- **Avg Cash Advance**: $449.75 (below average - not cash-dependent)
+- **Avg Credit Limit**: $7,642.78 (1.70× dataset mean)
+- **Purchase Frequency**: 0.95 (extremely active - use card regularly)
+- **Risk Level**: Low
+- **Value**: Highest-value customers requiring premium service and VIP treatment
 
-#### Cluster 1: Low Engagement (35% of customers)
-- **Characteristics**: Low activity across all metrics
-- **Avg Balance**: $850
-- **Avg Purchases**: $320
-- **Purchase Frequency**: 0.15
-- **Opportunity**: Re-engagement campaigns
+**Business Profile**: Premium Shoppers are the bank's most valuable segment. They make frequent, high-value transactions and maintain strong payment histories. These customers use their cards as their primary payment method rather than for emergency liquidity.
 
-#### Cluster 2: Premium Shoppers (18% of customers)
-- **Characteristics**: High purchases, high credit limits, frequent transactions
-- **Avg Purchases**: $4,200
-- **Avg Credit Limit**: $9,500
-- **Purchase Frequency**: 0.85
-- **Value**: High-value customers requiring premium service
+---
 
-#### Cluster 3: Balanced Users (25% of customers)
-- **Characteristics**: Moderate activity, balanced usage
-- **Avg Balance**: $1,500
-- **Avg Purchases**: $1,200
-- **Profile**: Stable, reliable customers
+#### Cluster 1: Low Engagement (68.3% of customers)
+- **Characteristics**: Low activity across all metrics, largest segment
+- **Avg Balance**: $807.72 (below average)
+- **Avg Purchases**: $496.06 (0.49× dataset mean - less than half average!)
+- **Avg Cash Advance**: $339.00 (low)
+- **Avg Credit Limit**: $3,267.02 (0.73× dataset mean)
+- **Purchase Frequency**: 0.46 (infrequent use - card is underutilized)
+- **Risk Level**: Low
+- **Opportunity**: Largest growth opportunity through re-engagement campaigns
+
+**Business Profile**: Low Engagement customers represent dormant or underutilized accounts. These cardholders maintain their accounts but show minimal activity, suggesting either dissatisfaction, competitive card usage, or lack of awareness of benefits.
+
+---
+
+#### Cluster 2: Cash Advance Users (17.4% of customers)
+- **Characteristics**: Very high cash advance usage, low purchase activity
+- **Avg Balance**: $4,023.79 (2.57× dataset mean - carrying significant debt)
+- **Avg Purchases**: $389.05 (0.39× dataset mean - very low shopping)
+- **Avg Cash Advance**: $3,917.25 (4.00× dataset mean! - extreme reliance on cash)
+- **Avg Credit Limit**: $6,729.47 (1.50× dataset mean)
+- **Purchase Frequency**: 0.23 (rarely shop, mainly use for cash advances)
+- **Risk Level**: High - potential financial distress
+- **Concern**: Heavy cash advance reliance suggests liquidity problems
+
+**Business Profile**: Cash Advance Users exhibit a concerning pattern of high cash withdrawals with minimal purchase activity. The elevated balances (2.57× mean) combined with heavy cash advance usage (4.00× mean) suggest these customers may be experiencing financial difficulties and using cash advances to meet liquidity needs.
 
 ### Anomaly Detection Results
 
-**Total Anomalies Detected: 448 customers (5% of dataset)**
+**Total Anomalies Detected: 448 customers (5.01% of dataset)**
 
 **Contamination Value: 0.05**
-- **Justification**: Domain knowledge suggests ~5% unusual behavior is reasonable
-- **Balance**: Not too conservative (missing outliers) or liberal (false positives)
+- **Justification**: Domain knowledge suggests ~5% unusual behavior is reasonable for credit card data
+- **Balance**: Not too conservative (missing real anomalies) or too liberal (false positives)
+- **Actionability**: Manageable number of cases to investigate thoroughly
 
 #### Anomaly Types
 
 | Anomaly Type | Count | Percentage | Business Action |
 |--------------|-------|------------|-----------------|
-| VIP High Spender | 87 | 19.4% | Dedicated account manager, premium rewards |
-| Heavy Cash Advance User | 156 | 34.8% | Monitor for financial distress, offer debt consolidation |
-| High Balance Low Payment | 92 | 20.5% | Credit risk review, payment reminders |
-| Inactive High Limit | 68 | 15.2% | Re-engagement campaign, limit adjustment |
-| Other Unusual Pattern | 45 | 10.1% | Manual review for fraud/data quality |
+| VIP High Spender | 91 | 20.3% | Dedicated account manager, premium rewards, exclusive benefits |
+| Heavy Cash Advance User | 163 | 36.4% | Monitor for financial distress, offer debt consolidation, budgeting tools |
+| High Balance Low Payment | 2 | 0.4% | Flag for credit risk review, send payment reminders, offer payment plans |
+| Inactive High Limit | 3 | 0.7% | Re-engagement campaign, targeted offers, consider limit adjustment |
+| Other Unusual Pattern | 189 | 42.2% | Manual review for data quality or fraud detection |
 
 #### Cluster Distribution of Anomalies
-- **Cash Advance Users**: 35% of cluster's anomalies
-- **Premium Shoppers**: 28% of cluster's anomalies
-- **Balanced Users**: 22% of cluster's anomalies
-- **Low Engagement**: 15% of cluster's anomalies
+
+**Where anomalies are concentrated:**
+- **Premium Shoppers (Cluster 0)**: 282 anomalies - **22.1% of this cluster**
+- **Cash Advance Users (Cluster 2)**: 158 anomalies - **10.1% of this cluster**
+- **Low Engagement (Cluster 1)**: 8 anomalies - **0.1% of this cluster**
+
+**Key Insight**: Anomalies are heavily concentrated in Premium Shoppers (22.1%) and Cash Advance Users (10.1%), while Low Engagement has minimal anomalies (0.1%). This pattern makes business sense: extreme behaviors (very high spending or high cash dependence) are more likely to be anomalous. The high anomaly rate in Premium Shoppers suggests this cluster contains both typical high-spenders and exceptional VIPs needing differentiated service levels.
 
 ### Key Business Insights
 
-1. **Market Segmentation Opportunity**: Clear differentiation between 4 customer types enables targeted marketing
+1. **Market Segmentation Opportunity**: Clear differentiation between 3 distinct customer types enables highly targeted marketing strategies and service levels
 
-2. **VIP Identification**: 87 high-value customers identified for premium service programs
+2. **VIP Identification**: 91 high-value customers identified for premium service programs and dedicated account management (20.3% of anomalies)
 
-3. **Risk Management**: 156 customers showing heavy cash advance usage may need financial support
+3. **Risk Management**: 163 customers showing heavy cash advance usage (4.00× dataset mean) require immediate financial wellness interventions and debt consolidation offers
 
-4. **Re-engagement Potential**: 35% of customers are low-engagement, representing growth opportunity
+4. **Re-engagement Potential**: 68.3% of customers are low-engagement, representing the largest growth opportunity. If even 10% can be activated, that's 611 additional active customers
 
-5. **Balanced Portfolio**: 25% of customers are stable "core" customers providing predictable revenue
+5. **Premium Focus**: 14.2% of customers (Premium Shoppers) drive disproportionate revenue with 4.17× average purchase activity. These customers deserve premium treatment to ensure retention
+
+6. **Anomaly Concentration**: 22.1% of Premium Shoppers are anomalous, indicating this segment contains both typical high-spenders and exceptional VIPs. This suggests a potential sub-segmentation opportunity within Premium Shoppers
+
+7. **Balanced Portfolio**: Despite the large Low Engagement segment, the portfolio maintains a healthy mix of premium customers (14.2%) and moderate-risk cash users (17.4%)
 
 ---
 
 ## 👥 Team Contributions
 
-### Binger (solely)
+### Binger Yu (solely)
 - Data exploration and preprocessing
 - Clustering analysis (elbow method, silhouette scores, K-means implementation)
 - Dimensionality reduction (PCA, t-SNE)
@@ -220,9 +268,7 @@ The dataset is already included in the `data/` directory. If you need to downloa
 - UMAP implementation and comparison
 - Integrated analysis and business recommendations
 - GitHub repository setup and organization
-- technical report
-
-**Collaboration**: Both team members participated in all code reviews, analysis discussions, and interpretation of results. We used pair programming for complex sections and divided visualization tasks.
+- 100% of technical report
 
 ---
 
@@ -232,13 +278,13 @@ The dataset is already included in the `data/` directory. If you need to downloa
 - **Algorithm**: K-means
 - **Optimization**: Tested K=2 to K=10
 - **Metrics**: Elbow method, Silhouette scores
-- **Result**: K=4 clusters with clear business interpretation
+- **Result**: K=3 clusters (silhouette score: 0.2510 - highest among all K values tested)
 
 ### 2. Dimensionality Reduction
-- **PCA**: Explained 68% of variance with 2 components
-- **t-SNE**: Revealed clear local cluster separation
-- **UMAP**: Balanced global and local structure
-- **Finding**: Data has non-linear structure with well-separated clusters
+- **PCA**: Explained 47.6% of variance with 2 components (PC1: 27.3%, PC2: 20.3%)
+- **t-SNE**: Revealed clear local cluster separation and non-linear patterns
+- **UMAP**: Balanced global and local structure, best for business presentations
+- **Finding**: Data has predominantly non-linear structure with moderately well-separated clusters
 
 ### 3. Anomaly Detection
 - **Algorithm**: Isolation Forest
@@ -277,15 +323,6 @@ The dataset is already included in the `data/` directory. If you need to downloa
 3. **UMAP Documentation**: McInnes, L., Healy, J., & Melville, J. (2018). UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction. https://umap-learn.readthedocs.io/
 
 4. **Course Materials**: COMP 9130 Week 4 lecture notes and starter notebooks
-
----
-
-## 📞 Contact
-
-For questions or issues with this project:
-- **GitHub Issues**: [Repository URL]/issues
-- **Email**: [your.email@university.edu]
-- **Course**: COMP 9130 - Applied Artificial Intelligence
 
 ---
 
